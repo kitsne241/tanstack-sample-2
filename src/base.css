@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   font-size: 15px; /* 1rem の定義　デフォルトは 16px */
   font-family: 'Noto Sans JP Variable', sans-serif;
