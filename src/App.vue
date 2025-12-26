@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import PButton from 'primevue/button'
+</script>
+
 <template>
-  <div>Hello!</div>
+  <PButton label="Click Me" />
 </template>
