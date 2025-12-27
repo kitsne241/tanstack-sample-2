@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useTime } from '@/utils'
+import PCard from 'primevue/card'
 import Observer from '@/components/Observer.vue'
 import PToggleSwitch from 'primevue/toggleswitch'
 import DataViewer from './components/DataViewer.vue'
@@ -71,16 +72,21 @@ watch(
 <template>
   <div class="w-screen h-screen flex justify-center">
     <div class="w-full h-full px-12 flex flex-col justify-center">
+      <div class="text-4xl font-bold mb-4">Value</div>
+      <PCard class="mb-8 p-4 w-60 h-40">
+        <template #content>
+          <div>maxGcSec: {{ maxGcSec }}</div>
+          <div class="mb-2">{{ gcCountDown }}</div>
+          <div class="flex items-center gap-4">
+            <PToggleSwitch v-model="isValueOpen" />
+            <DataViewer v-if="isValueOpen" />
+          </div>
+        </template>
+      </PCard>
       <div class="text-4xl font-bold mb-4">Observers</div>
       <div class="flex gap-4 h-40 mb-8">
         <Observer v-for="o in observers" :key="o.id" :observer="o" @remove="removeObserver" />
         <AddObserver @add="addObserver" />
-      </div>
-      <div class="text-4xl font-bold mb-4">Value</div>
-      <div class="mb-2">{{ gcCountDown }}</div>
-      <div class="flex items-center gap-4">
-        <PToggleSwitch v-model="isValueOpen" />
-        <DataViewer v-if="isValueOpen" />
       </div>
     </div>
   </div>

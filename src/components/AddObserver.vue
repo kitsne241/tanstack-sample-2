@@ -19,23 +19,22 @@ const handleAdd = () => {
 <template>
   <PCard class="w-60 h-full">
     <template #content>
-      <div class="relative w-full h-full flex flex-col gap-2">
+      <div class="relative w-full h-full flex flex-col justify-center gap-2">
         <PInputNumber
           v-model="staleSec"
-          type="text"
           placeholder="StaleSec"
           size="small"
-          class="!bg-inherit focus:!border-white"
+          :class="$style.input"
         />
-        <PInputNumber
-          v-model="gcSec"
-          type="text"
-          placeholder="GcSec"
-          size="small"
-          class="!bg-inherit focus:!border-white"
-        />
-        <PButton label="Add" variant="text" @click="handleAdd" />
+        <PInputNumber v-model="gcSec" placeholder="GcSec" size="small" :class="$style.input" />
+        <PButton label="Add" size="small" variant="text" @click="handleAdd" />
       </div>
     </template>
   </PCard>
 </template>
+
+<style module>
+.input :global(input) {
+  background-color: inherit !important;
+}
+</style>
