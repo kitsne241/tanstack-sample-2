@@ -36,6 +36,7 @@ export default defineConfig([
 
       'vue/no-template-target-blank': ['error', { enforceDynamicLinks: 'always' }],
       'vue/no-v-html': 'error',
+      'vue/multi-word-component-names': 'off',
     },
   },
 
