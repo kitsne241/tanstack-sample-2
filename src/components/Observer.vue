@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/vue-query'
 const props = defineProps<{ observer: { id: number; staleSec: number; gcSec: number } }>()
 const emit = defineEmits<{ (e: 'remove', id: number): void }>()
 
-useQuery({
+useQuery<{ id: number }>({
   queryKey: ['data'],
   queryFn: () => ({ id: props.observer.id }),
   staleTime: props.observer.staleSec * 1000,
@@ -14,7 +14,7 @@ useQuery({
 </script>
 
 <template>
-  <PCard class="w-60 h-45 !bg-blue-500">
+  <PCard class="w-40 h-full !bg-blue-500">
     <template #content>
       <div class="relative w-full h-full">
         <div class="text-xl font-bold mb-4">#{{ observer.id }}</div>
