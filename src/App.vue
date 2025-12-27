@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { useTime } from '@/utils'
 import Observer from '@/components/Observer.vue'
 import PToggleSwitch from 'primevue/toggleswitch'
@@ -8,7 +8,7 @@ import AddObserver from './components/AddObserver.vue'
 
 const idCounter = ref(0)
 const isValueOpen = ref(true)
-const latestGcSec = ref(0)
+const maxGcSec = ref(0)
 const noObserverTimeStamp = ref(0)
 const { currentTime } = useTime()
 
@@ -21,7 +21,7 @@ const removeObserver = (id: number) => {
 }
 const addObserver = (staleSec: number, gcSec: number) => {
   observers.value.push({ id: ++idCounter.value, staleSec, gcSec })
-  latestGcSec.value = gcSec
+  maxGcSec.value = Math.max(maxGcSec.value, gcSec)
 }
 
 watch(
@@ -33,14 +33,39 @@ watch(
   }
 )
 
-const gcCountDown = computed(() => {
-  const passedSec = (currentTime.value.getTime() - noObserverTimeStamp.value) / 1000
-  if (latestGcSec.value < passedSec) {
-    return '0'
-  } else {
-    return (latestGcSec.value - passedSec).toFixed(3)
+const gcCountDown = ref('')
+watch(
+  () => currentTime.value,
+  () => {
+    if (observers.value.length > 0 || isValueOpen.value) {
+      gcCountDown.value = '-'
+      return // まだ gcTime カウントが始まっていない
+    }
+
+    const passedSec = (currentTime.value.getTime() - noObserverTimeStamp.value) / 1000
+    if (maxGcSec.value > passedSec) {
+      gcCountDown.value = 'GC CountDown: ' + (maxGcSec.value - passedSec).toFixed(3)
+      return
+    } else {
+      if (gcCountDown.value !== 'Cache Cleared') {
+        // ガベージコレクション発生
+        gcCountDown.value = 'Cache Cleared'
+        maxGcSec.value = 0
+        return
+      }
+    }
   }
-})
+)
+
+watch(
+  () => gcCountDown.value,
+  (newVal) => {
+    // ガベージコレクション発生
+    if (newVal === '0') {
+      maxGcSec.value = 0
+    }
+  }
+)
 </script>
 
 <template>
@@ -52,7 +77,7 @@ const gcCountDown = computed(() => {
         <AddObserver @add="addObserver" />
       </div>
       <div class="text-4xl font-bold mb-4">Value</div>
-      <div class="mb-2">GC CountDown: {{ gcCountDown }}</div>
+      <div class="mb-2">{{ gcCountDown }}</div>
       <div class="flex items-center gap-4">
         <PToggleSwitch v-model="isValueOpen" />
         <DataViewer v-if="isValueOpen" />

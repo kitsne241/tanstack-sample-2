@@ -1,13 +1,18 @@
-import { ref, computed } from 'vue'
+import { shallowRef, onMounted, onUnmounted, readonly } from 'vue'
 
 export function useTime() {
-  const currentTime = ref(new Date())
+  const currentTime = shallowRef(new Date()) // 負荷を軽減
+  let animationFrameId: number
+
   const updateTime = () => {
     currentTime.value = new Date()
-    requestAnimationFrame(updateTime)
+    animationFrameId = requestAnimationFrame(updateTime)
   }
-  updateTime() // 呼び出されて即座に現在時刻の更新を開始
-  return {
-    currentTime: computed(() => currentTime.value),
-  }
+
+  onMounted(updateTime)
+  onUnmounted(() => {
+    if (animationFrameId) cancelAnimationFrame(animationFrameId)
+  })
+
+  return { currentTime: readonly(currentTime) }
 }
