@@ -10,6 +10,8 @@ pnpm add @tanstack/vue-query
 
 ## TanStack Query 挙動メモ
 
+### GC
+
 ```ts
 // DataViewer.vue の useQuery
 staleTime: 未設定,
@@ -50,3 +52,23 @@ gcTime: 0,
 - gcTime は 3s で上書きされず 10s のままの扱いで、B が消えてからちょうど 10s 後にデータが消えた
 - gcTime はキャッシュが持続した限りにおける最大値を尊重するらしい
 - ただし、一度 gc 対象になると gcTime は 0（あるいは指定のデフォルト値）にリセットされる
+
+### Stale
+
+[公式ドキュメント](https://tanstack.com/query/latest/docs/framework/react/guides/important-defaults) によると、stale のとき以下のいずれかのトリガーによりキャッシュが自動で再取得される
+
+1. useQuery をもつコンポーネントがマウントされたとき
+2. ユーザーがウィンドウにフォーカスしたり、別のタブから戻ってきたとき
+3. オフラインからオンラインに復帰したとき
+4. 手動で設定した `refetchInterval` に達したとき
+
+なので、staleTime が 3s の Observer を追加してじっと見ているだけでは何も起こらない
+
+```md
+1. staleTime が 10s の Observer A を追加
+2. staleTime が 3s の Observer B を追加
+```
+
+- ブラウザから 4 秒フォーカスを外して戻ってくると B が Fetched! と光った
+- ブラウザから 11 秒フォーカスを外して戻ってくると A が Fetched! と光った
+- 既存の Observer で「キャッシュを stale と見做したもの」のうち「最も若い番号」が fetch 役っぽい
