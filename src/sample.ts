@@ -1,77 +1,112 @@
-type Observer = { id: number }
-type Options = {
-  queryFn: () => Promise<object>
-  staleTime?: number
-  gcTime?: number
+type Observer = {
+  id: number
+  onDataUpdate: () => void
 }
 
+type QueryOptions = {
+  queryFn?: () => Promise<object>
+  staleTime?: number // デフォルト 0
+  gcTime?: number // デフォルト 5min
+}
+
+const DEFAULT_GC_TIME = 5 * 60 * 1000
+
+// Query の挙動を雰囲気でコードに起こしてみたもの
 export class Query {
   data: object | null = null
-  queryFn: () => Promise<object>
-  gcTime: number
+  status: 'pending' | 'success' | 'error' = 'pending'
+
+  // キャッシュ管理
+  lastUpdated: number = 0
   observers: Observer[] = []
 
-  lastUpdated: number = 0 // キャッシュ管理
-  gcTimeout: number | undefined = undefined // ガベージコレクション関数の ID
-  promise: Promise<void> | null = null // fetch 関数
+  // GC 管理
+  gcTime: number = 0
+  gcTimeout: ReturnType<typeof setTimeout> | null = null
 
-  constructor(options: Options) {
-    this.queryFn = options.queryFn
-    this.gcTime = options.gcTime ?? 0
+  // 重複排除用
+  promise: Promise<object> | null = null
+  queryFn: (() => Promise<object>) | null = null
+
+  constructor(options: QueryOptions) {
+    this.queryFn = options.queryFn || null
   }
 
-  // useQuery された
-  subscribe(observer: Observer, options: Options) {
+  private updateGcTime(newGcTime: number | undefined) {
+    const time = newGcTime ?? DEFAULT_GC_TIME
+    this.gcTime = Math.max(this.gcTime, time)
+  }
+
+  // 宣言的
+  subscribe(observer: Observer, options: QueryOptions) {
     this.observers.push(observer)
-    clearTimeout(this.gcTimeout)
-    this.gcTimeout = undefined
-    void this.checkStaleAndFetch(options)
+    this.updateGcTime(options.gcTime) // fetch の有無に関わらず gcTime 更新
+
+    if (this.gcTimeout) {
+      clearTimeout(this.gcTimeout) // 既存の GC タイマーを停止
+      this.gcTimeout = null
+    }
+
+    void this.checkStaleAndFetch('mount', options.staleTime)
     return () => this.unsubscribe(observer)
   }
 
-  // Observer のアンマウント
   unsubscribe(observer: Observer) {
     this.observers = this.observers.filter((o) => o !== observer)
     if (this.observers.length === 0) {
-      this.gcTimeout = setTimeout(() => {
-        this.data = null
-        this.gcTime = 0 // gcTime リセット
-      }, this.gcTime)
+      this.gcTimeout = setTimeout(() => this.gc(), this.gcTime)
     }
   }
 
-  // フェッチ実行
+  // 命令的
+  async fetchQuery(options: QueryOptions) {
+    this.queryFn = options.queryFn ?? this.queryFn
+    const isStale = this.isStale(options.staleTime)
+    if (this.data && !isStale) return this.data
+    this.updateGcTime(options.gcTime) // fetch が発生したら gcTime 更新
+    return this.fetch()
+  }
+
   async fetch() {
-    if (this.promise) return this.promise
+    if (!this.queryFn) return
+    if (this.promise) return this.promise // 重複排除
+
     this.promise = (async () => {
       try {
-        this.data = await this.queryFn()
+        this.data = await this.queryFn!()
         this.lastUpdated = Date.now()
+        this.status = 'success'
+        this.notifyObservers()
+        return this.data
       } finally {
         this.promise = null
       }
     })()
+
     return this.promise
   }
 
-  // 状態チェックとフェッチのトリガー
-  async checkStaleAndFetch(options: Options) {
-    const isStale = Date.now() - this.lastUpdated > (options.staleTime ?? 0)
-    if (this.data && !isStale) return // 新しければ何もしない
-    this.gcTime = Math.max(this.gcTime, options.gcTime ?? 0)
-    // fetch 直前に gcTime をより大きな値に更新するという副作用を伴う
-    await this.fetch()
+  isStale(staleTime: number | undefined): boolean {
+    if (!this.data) return true // データがない場合も stale
+    return Date.now() - this.lastUpdated > (staleTime ?? 0)
   }
 
-  // Stale なら取り直す
-  async fetchQuery(options: Options) {
-    await this.checkStaleAndFetch(options)
-    return this.data
+  async checkStaleAndFetch(reason: string, staleTime: number | undefined) {
+    console.log(`[${reason}] checkStaleAndFetch`)
+    if (this.isStale(staleTime)) {
+      // 実際のライブラリではここで deduplication が効くので、fetch は 1 回しか走らない
+      await this.fetch()
+    }
   }
 
-  // あれば古くても返す
-  async ensureQueryData(options: Options) {
-    if (this.data) return this.data
-    return this.fetchQuery(options)
+  gc() {
+    this.data = null
+    this.status = 'pending'
+    this.lastUpdated = 0
+    this.gcTime = 0
+  }
+
+  notifyObservers() {
+    this.observers.forEach((o) => o.onDataUpdate())
   }
 }
