@@ -60,6 +60,6 @@ useQuery<{ id: number }>({
 }
 
 .fetched {
-  opacity: 1;
+  opacity: 1 !important;
 }
 </style>

@@ -72,3 +72,16 @@ gcTime: 0,
 - ブラウザから 4 秒フォーカスを外して戻ってくると B が Fetched! と光った
 - ブラウザから 11 秒フォーカスを外して戻ってくると A が Fetched! と光った
 - 既存の Observer で「キャッシュを stale と見做したもの」のうち「最も若い番号」が fetch 役っぽい
+
+### Fetch & Ensure
+
+`fetchQuery` および `ensureQueryData` にも staleTime と gcTime を渡せる
+
+```md
+1. staleTime 3s, gcTime 3s の Observer A を追加
+2. staleTime 3s, gcTime 10s として fetchQuery を実行
+```
+
+- A を消してから 3 秒後にキャッシュが消える
+- 1 から 3 秒以後（キャッシュはすでに stale）に 2 を実行すると、A を消してから 10 秒後にキャッシュが消える
+- どうやら gcTime の書き換えは「親関数の実行」ではなく「queryFn の実行」で発生している様子
