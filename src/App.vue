@@ -5,7 +5,7 @@ import PCard from 'primevue/card'
 import Observer from '@/components/Observer.vue'
 import PToggleSwitch from 'primevue/toggleswitch'
 import DataViewer from './components/DataViewer.vue'
-import AddObserver from './components/AddObserver.vue'
+import NumberFields from './components/NumberFields.vue'
 import QueryData from './components/QueryData.vue'
 
 const idCounter = ref(0)
@@ -93,7 +93,7 @@ watch(
       <div class="text-4xl font-bold mb-4">Observers</div>
       <div class="flex gap-4 h-40 mb-8">
         <Observer v-for="o in observers" :key="o.id" :observer="o" @remove="removeObserver" />
-        <AddObserver label="Add" @add="addObserver" />
+        <NumberFields label="Add" @confirm="addObserver" />
       </div>
     </div>
   </div>

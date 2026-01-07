@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
-const query = useQuery<{ id: number }>({
+const query = useQuery<{ text: string }>({
   queryKey: ['data'],
-  queryFn: () => ({ id: -1 }),
+  queryFn: () => ({ text: 'None' }),
   staleTime: Infinity,
   gcTime: 0,
 })
@@ -18,7 +18,7 @@ const dataText = computed(() => {
   if (!query.data.value) {
     return 'No Data'
   }
-  return `id: ${query.data.value.id}`
+  return `text: ${query.data.value.text}`
 })
 </script>
 

@@ -4,17 +4,17 @@ import PCard from 'primevue/card'
 import PButton from 'primevue/button'
 import { useQuery } from '@tanstack/vue-query'
 const props = defineProps<{ observer: { id: number; staleSec: number; gcSec: number } }>()
-const emit = defineEmits<{ (e: 'remove', id: number): void }>()
+const emit = defineEmits<(e: 'remove', id: number) => void>()
 const fetched = ref(false)
 
-useQuery<{ id: number }>({
+useQuery<{ text: string }>({
   queryKey: ['data'],
   queryFn: () => {
     fetched.value = true
     setTimeout(() => {
       fetched.value = false
     }, 200)
-    return { id: props.observer.id }
+    return { text: `#${props.observer.id}` }
   },
   staleTime: props.observer.staleSec * 1000,
   gcTime: props.observer.gcSec * 1000,

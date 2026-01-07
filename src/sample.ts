@@ -17,11 +17,11 @@ export class Query {
   status: 'pending' | 'success' | 'error' = 'pending'
 
   // キャッシュ管理
-  lastUpdated: number = 0
+  lastUpdated = 0
   observers: Observer[] = []
 
   // GC 管理
-  gcTime: number = 0
+  gcTime = 0
   gcTimeout: ReturnType<typeof setTimeout> | null = null
 
   // 重複排除用
@@ -29,7 +29,7 @@ export class Query {
   queryFn: (() => Promise<object>) | null = null
 
   constructor(options: QueryOptions) {
-    this.queryFn = options.queryFn || null
+    this.queryFn = options.queryFn ?? null
   }
 
   private updateGcTime(newGcTime: number | undefined) {

@@ -4,13 +4,13 @@ import PCard from 'primevue/card'
 import PButton from 'primevue/button'
 import PInputNumber from 'primevue/inputnumber'
 defineProps<{ label: string }>()
-const emit = defineEmits<{ (e: 'add', staleSec: number, gcSec: number): void }>()
+const emit = defineEmits<(e: 'confirm', staleSec: number, gcSec: number) => void>()
 const staleSec = ref<number>()
 const gcSec = ref<number>()
 
 const handleAdd = () => {
   if (staleSec.value && gcSec.value) {
-    emit('add', staleSec.value, gcSec.value)
+    emit('confirm', staleSec.value, gcSec.value)
     staleSec.value = undefined
     gcSec.value = undefined
   }
