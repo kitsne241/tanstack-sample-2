@@ -16,4 +16,8 @@ export const queryClient = new QueryClient()
 const app = createApp(App)
 app.use(PrimeVue, { theme: { preset: Aura } })
 app.use(VueQueryPlugin, { queryClient })
+
+console.log('isDev:', import.meta.env.DEV)
+console.log('Mode:', import.meta.env.MODE)
+
 app.mount('#app')
